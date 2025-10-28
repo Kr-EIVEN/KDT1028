@@ -1,0 +1,84 @@
+# ==========================================
+# 🌐 Next.js + TailwindCSS + Node.js Project
+# Optimized for Windows + VSCode
+# ==========================================
+
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Next.js build output
+.next/
+out/
+.cache/
+
+# Production build
+build/
+dist/
+
+# TypeScript build output
+*.tsbuildinfo
+
+# Logs
+logs
+*.log
+*.csv
+*.dat
+
+# OS & System files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Misc
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage / Test
+coverage/
+*.lcov
+jest-html-reporters-*
+
+# Temporary folders
+tmp/
+temp/
+.cache-loader/
+__pycache__/
+
+# Optional folders (comment out if needed)
+# public/assets/temp/
+# uploads/
+# screenshots/
+
+# ==========================================
+# ✅ Custom exclusions for PicShow project
+# ==========================================
+
+# Prevent GitHub push errors (files > 100MB)
+.next/cache/
+.next/server/
+.next/static/chunks/
+node_modules/@next/
+
+# Personal/local dev folder (your workspace)
+KDT1028/
