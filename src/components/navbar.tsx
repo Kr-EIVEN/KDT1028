@@ -36,9 +36,9 @@ export default function Navbar() {
               <Image
                 src="/assets/imgs/cameraIcon.png"
                 alt="PicShow"
-                width={28}
-                height={28}
-                className="drop-shadow-sm"
+                width={50}
+                height={50}
+                className="drop-shadow-md"
               />
               <span className="font-bold tracking-wide text-lg">PicShow</span>
             </Link>
