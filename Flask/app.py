@@ -1,72 +1,84 @@
-# app.py
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-import mysql.connector, os, uuid, pathlib
-from werkzeug.utils import secure_filename
+import mysql.connector, os
+from werkzeug.security import generate_password_hash, check_password_hash
 
-app = Flask(__name__, static_url_path="/static", static_folder="static")
-CORS(app, resources={r"/api/*": {"origins": "*"}})  # 개발용 전체 허용
+app = Flask(__name__)
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 DB = dict(
-    host=os.getenv("MYSQL_HOST","127.0.0.1"),
-    user=os.getenv("MYSQL_USER","root"),
-    password=os.getenv("MYSQL_PW","your_password"),
-    database=os.getenv("MYSQL_DB","picshow"),
+    host="127.0.0.1",
+    user="root",
+    password="1111",   # ✅ 본인 MySQL 비번
+    database="picshow",
 )
 
 def conn():
     return mysql.connector.connect(**DB)
 
-# 2-1) 특정 사용자 이미지 목록
-@app.get("/api/users/<int:user_id>/images")
-def list_user_images(user_id: int):
-    limit  = int(request.args.get("limit", 40))
-    offset = int(request.args.get("offset", 0))
-    q = """
-      SELECT id, user_id, filename, url_path, created_at
-      FROM user_images
-      WHERE user_id=%s
-      ORDER BY created_at DESC
-      LIMIT %s OFFSET %s
-    """
+# -------------------
+#  회원가입 API
+# -------------------
+@app.post("/api/auth/signup")
+def signup():
+    data = request.get_json()
+    email = data.get("email")
+    pw = data.get("password")
+    name = data.get("nickname")
+
+    if not email or not pw or not name:
+        return jsonify({"error": "필수 항목 누락"}), 400
+
     c = conn(); cur = c.cursor(dictionary=True)
-    cur.execute(q, (user_id, limit, offset))
-    rows = cur.fetchall()
-    cur.close(); c.close()
+    cur.execute("SELECT id FROM users WHERE email=%s", (email,))
+    if cur.fetchone():
+        cur.close(); c.close()
+        return jsonify({"error": "이미 가입된 이메일입니다."}), 409
 
-    # 프론트에서 바로 쓰도록 절대 URL도 함께 제공
-    base = request.host_url.rstrip("/")
-    for r in rows:
-        r["image_url"] = f'{base}{r["url_path"]}'
-    return jsonify(rows)
-
-ALLOWED = {"png","jpg","jpeg","webp","gif"}
-
-# 2-2) 업로드 (multipart/form-data)
-@app.post("/api/users/<int:user_id>/images")
-def upload_user_image(user_id: int):
-    file = request.files.get("file")
-    if not file:
-        return {"error":"no file"}, 400
-    ext = file.filename.rsplit(".",1)[-1].lower()
-    if ext not in ALLOWED:
-        return {"error":"bad type"}, 400
-
-    os.makedirs(f"static/uploads/{user_id}", exist_ok=True)
-    fn = secure_filename(f"{uuid.uuid4().hex}.{ext}")
-    save_path = pathlib.Path(f"static/uploads/{user_id}")/fn
-    file.save(save_path)
-
-    url_path = f"/static/uploads/{user_id}/{fn}"
-
-    c = conn(); cur = c.cursor()
+    hashed = generate_password_hash(pw)
     cur.execute(
-        "INSERT INTO user_images(user_id, filename, url_path) VALUES(%s,%s,%s)",
-        (user_id, fn, url_path)
+        "INSERT INTO users (email, password_hash, name) VALUES (%s, %s, %s)",
+        (email, hashed, name),
     )
     c.commit()
-    img_id = cur.lastrowid
+    uid = cur.lastrowid
     cur.close(); c.close()
 
-    full = request.host_url.rstrip("/") + url_path
-    return {"ok": True, "id": img_id, "image_url": full, "url_path": url_path}
+    return jsonify({"ok": True, "user_id": uid, "email": email, "name": name})
+
+# -------------------
+#  로그인 API
+# -------------------
+@app.post("/api/auth/login")
+def login():
+    data = request.get_json()
+    email = data.get("email")
+    pw = data.get("password")
+
+    c = conn(); cur = c.cursor(dictionary=True)
+    cur.execute("SELECT id, password_hash, name FROM users WHERE email=%s", (email,))
+    user = cur.fetchone()
+    cur.close(); c.close()
+
+    if not user:
+        return jsonify({"error": "존재하지 않는 이메일입니다."}), 404
+    if not check_password_hash(user["password_hash"], pw):
+        return jsonify({"error": "비밀번호가 올바르지 않습니다."}), 401
+
+    return jsonify({
+        "ok": True,
+        "user_id": user["id"],
+        "email": email,
+        "nickname": user["name"],
+    })
+
+# -------------------
+#  서버 헬스체크
+# -------------------
+@app.get("/api/health")
+def health():
+    return jsonify({"ok": True})
+
+
+if __name__ == "__main__":
+    app.run(host="127.0.0.1", port=5000, debug=True)
