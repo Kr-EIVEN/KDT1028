@@ -2,96 +2,123 @@ import React, { useState } from 'react';
 
 function ImageUploader() {
   const [image, setImage] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
   const [tags, setTags] = useState(null);
-  const [error, setError] = useState(null);
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [confirmedTags, setConfirmedTags] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [confirmedCategories, setConfirmedCategories] = useState([]);
 
-  const handleUpload = async (file) => {
+  function handleTagSelect(e) {
+    const tag = e.target.value;
+    if (e.target.checked) {
+      setSelectedTags(prev => [...prev, tag]);
+    } else {
+      setSelectedTags(prev => prev.filter(t => t !== tag));
+    }
+  }
+
+  function handleCategorySelect(e) {
+    const cat = e.target.value;
+    if (e.target.checked) {
+      setSelectedCategories(prev => [...prev, cat]);
+    } else {
+      setSelectedCategories(prev => prev.filter(c => c !== cat));
+    }
+  }
+
+  async function handleImageUpload(e) {
+    const file = e.target.files[0];
+    setImage(file);
+
     const formData = new FormData();
     formData.append('image', file);
 
     try {
       const res = await fetch('http://127.0.0.1:5055/predict', {
-      method: 'POST',
-      body: formData,
-    });
-
-
+        method: 'POST',
+        body: formData,
+      });
       const data = await res.json();
-
-      if (!res.ok || data.error) {
-        if (data.error?.includes('NSFW')) {
-          setError("🚫 부적절한 사진입니다.");
-        } else {
-          setError("⚠️ 예측 중 오류가 발생했습니다.");
-        }
-        setTags(null);
-        setPreviewUrl(null);
-        return;
-      }
-
       setTags(data);
-      setError(null);
+      setSelectedTags([]);
+      setConfirmedTags([]);
+      setSelectedCategories([]);
+      setConfirmedCategories([]);
     } catch (err) {
-      console.error("업로드 실패:", err);
-      setError("❌ 서버 연결에 실패했습니다.");
-      setTags(null);
-      setPreviewUrl(null);
+      console.error('서버 연결 실패:', err);
     }
-  };
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImage(file);
-      setPreviewUrl(URL.createObjectURL(file));
-      setError(null);
-      handleUpload(file);
-    }
-  };
+  }
 
   return (
-    <div>
-      <input type="file" accept="image/*" onChange={handleFileChange} />
+    <div style={{ padding: '20px' }}>
+      <h2>이미지 업로드</h2>
+      <input type="file" accept="image/*" onChange={handleImageUpload} />
 
-      {error && (
-        <div style={{ marginTop: '20px', color: 'red', fontWeight: 'bold' }}>
-          {error}
-        </div>
-      )}
-
-      {previewUrl && !error && (
+      {image && (
         <div style={{ marginTop: '20px' }}>
           <img
-            src={previewUrl}
-            alt="Preview"
+            src={URL.createObjectURL(image)}
+            alt="preview"
             style={{ maxWidth: '300px', borderRadius: '8px' }}
           />
         </div>
       )}
 
-      {tags && tags.object_tags && (
-  <div style={{ marginTop: '20px' }}>
-    <h3>🎯 해시태그 결과</h3>
-    <p><strong>Object:</strong> {tags.object_tags.join(' ')}</p>
-    <p><strong>Scene:</strong> {tags.scene_tags.join(' ')}</p>
-    <p><strong>Mood:</strong> {tags.mood_tags.join(' ')}</p>
-  </div>
-)}
+      {tags && (
+        <>
+          <div style={{ marginTop: '30px' }}>
+            <h3>🎯 해시태그 선택</h3>
+            {[...tags.object_tags, ...tags.scene_tags, ...tags.mood_tags].map((tag, idx) => (
+              <label key={idx} style={{ marginRight: '10px' }}>
+                <input
+                  type="checkbox"
+                  value={tag}
+                  onChange={handleTagSelect}
+                />
+                {tag}
+              </label>
+            ))}
 
-{tags && tags.categories && (
-  <div style={{ marginTop: '20px' }}>
-    <h3>📊 카테고리 Top-3</h3>
-    <ul>
-      {tags.categories.map(([name, score], idx) => (
-        <li key={idx}>
-          {name}: {(score * 100).toFixed(1)}%
-        </li>
-      ))}
-    </ul>
-  </div>
-)}
+            <div style={{ marginTop: '20px' }}>
+              <button onClick={() => setConfirmedTags(selectedTags)}>
+                선택하기
+              </button>
+            </div>
 
+            {confirmedTags.length > 0 && (
+              <div style={{ marginTop: '20px' }}>
+                <strong>선택된 해시태그:</strong> {confirmedTags.join(', ')}
+              </div>
+            )}
+          </div>
+
+          <div style={{ marginTop: '40px' }}>
+            <h3>📂 카테고리 선택</h3>
+            {tags.categories.map(([cat], idx) => (
+              <label key={idx} style={{ marginRight: '10px' }}>
+                <input
+                  type="checkbox"
+                  value={cat}
+                  onChange={handleCategorySelect}
+                />
+                {cat}
+              </label>
+            ))}
+
+            <div style={{ marginTop: '20px' }}>
+              <button onClick={() => setConfirmedCategories(selectedCategories)}>
+                선택하기
+              </button>
+            </div>
+
+            {confirmedCategories.length > 0 && (
+              <div style={{ marginTop: '20px' }}>
+                <strong>선택된 카테고리:</strong> {confirmedCategories.join(', ')}
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
