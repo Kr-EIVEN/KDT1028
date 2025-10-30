@@ -1,7 +1,6 @@
 "use client";
 import Image from "next/image";
 import { Button } from "@material-tailwind/react";
-export default FixedPlugin;
 
 export function FixedPlugin() {
   return (
@@ -17,3 +16,5 @@ export function FixedPlugin() {
   );
 }
 
+// ✅ default export는 반드시 컴포넌트 정의 **아래쪽**에 위치해야 합니다
+export default FixedPlugin;
