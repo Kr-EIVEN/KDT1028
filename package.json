@@ -2,6 +2,7 @@
   "name": "nextjs-tailwind-event-landing-page",
   "version": "1.0.0",
   "private": true,
+  "proxy" : "http://localhost:5000",
   "author": "Creative Tim",
   "license": "See license in https://www.creative-tim.com/license",
   "homepage": "https://demos.creative-tim.com/nextjs-tailwind-event-landing-page",
