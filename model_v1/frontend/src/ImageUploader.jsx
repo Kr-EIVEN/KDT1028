@@ -5,6 +5,8 @@ function ImageUploader() {
   const [tags, setTags] = useState(null);
   const [selectedTags, setSelectedTags] = useState([]);
   const [confirmedTags, setConfirmedTags] = useState([]);
+  const [customTag, setCustomTag] = useState('');
+  const [customTags, setCustomTags] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [confirmedCategories, setConfirmedCategories] = useState([]);
 
@@ -26,6 +28,20 @@ function ImageUploader() {
     }
   }
 
+  function handleCustomTagAdd() {
+    const formatted = customTag.startsWith('#') ? customTag : `#${customTag}`;
+    const allRecommended = [...(tags?.object_tags || []), ...(tags?.scene_tags || []), ...(tags?.mood_tags || [])];
+    if (
+      formatted &&
+      !customTags.includes(formatted) &&
+      !allRecommended.includes(formatted)
+    ) {
+      setCustomTags(prev => [...prev, formatted]);
+      setSelectedTags(prev => [...prev, formatted]);
+      setCustomTag('');
+    }
+  }
+
   async function handleImageUpload(e) {
     const file = e.target.files[0];
     setImage(file);
@@ -42,6 +58,8 @@ function ImageUploader() {
       setTags(data);
       setSelectedTags([]);
       setConfirmedTags([]);
+      setCustomTags([]);
+      setCustomTag('');
       setSelectedCategories([]);
       setConfirmedCategories([]);
     } catch (err) {
@@ -73,11 +91,40 @@ function ImageUploader() {
                 <input
                   type="checkbox"
                   value={tag}
+                  checked={selectedTags.includes(tag)}
                   onChange={handleTagSelect}
                 />
                 {tag}
               </label>
             ))}
+
+            {customTags.length > 0 && (
+              <div style={{ marginTop: '10px' }}>
+                <h4>📝 직접 추가한 태그</h4>
+                {customTags.map((tag, idx) => (
+                  <label key={`custom-${idx}`} style={{ marginRight: '10px' }}>
+                    <input
+                      type="checkbox"
+                      value={tag}
+                      checked={selectedTags.includes(tag)}
+                      onChange={handleTagSelect}
+                    />
+                    {tag}
+                  </label>
+                ))}
+              </div>
+            )}
+
+            <div style={{ marginTop: '20px' }}>
+              <input
+                type="text"
+                value={customTag}
+                onChange={e => setCustomTag(e.target.value)}
+                placeholder="직접 해시태그 입력"
+                style={{ marginRight: '10px' }}
+              />
+              <button onClick={handleCustomTagAdd}>추가하기</button>
+            </div>
 
             <div style={{ marginTop: '20px' }}>
               <button onClick={() => setConfirmedTags(selectedTags)}>
@@ -99,6 +146,7 @@ function ImageUploader() {
                 <input
                   type="checkbox"
                   value={cat}
+                  checked={selectedCategories.includes(cat)}
                   onChange={handleCategorySelect}
                 />
                 {cat}
