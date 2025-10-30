@@ -18,6 +18,7 @@ from test import (
     infer_mood_clip,
     infer_categories_clip,
     category_votes_from_tags,
+    category_votes_from_scene_tags,
     mix_category_scores,
     run_full_infer
 )

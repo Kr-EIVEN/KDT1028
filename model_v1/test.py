@@ -191,7 +191,15 @@ def postprocess_objects(preds: List[str], want: int = 3) -> List[str]:
 
 def infer_objects(pil_img: Image.Image, topk: int = 3) -> List[str]:
     raw = infer_resnet_objects_raw(pil_img, topk=5)
-    return postprocess_objects(raw, want=topk)
+    tags = postprocess_objects(raw, want=topk)
+
+    # ✅ 사람 관련 태그가 없는데 옷만 있을 경우 → #person 추가
+    person_keywords = ["suit", "dress", "jacket", "shirt", "jeans", "hat", "kimono", "pajama"]
+    if any(kw in tag.lower() for tag in tags for kw in person_keywords):
+        if not any("person" in tag.lower() for tag in tags):
+            tags.append("#person")
+    return tags
+
 # ===============================
 # Cell 5. ResNet-Places – 장소
 # ===============================
@@ -277,56 +285,97 @@ def infer_categories_clip(pil_img: Image.Image) -> Dict[str, float]:
 
 # ===============================
 # Cell 7. 태그 투표 + CLIP 점수 혼합
+# (객체/장소 투표를 분리하고, 0.4/0.3/0.3으로 합산)
 # ===============================
-def category_votes_from_tags(obj_tags: List[str], scene_tags: List[str]) -> Dict[str, float]:
+
+def category_votes_from_tags(obj_tags: List[str]) -> Dict[str, float]:
+    """ResNet-객체 결과로부터 카테고리별 점수 만들기"""
     votes = {c: 0.0 for c in CATEGORY_PROMPTS.keys()}
 
-    # 동물
-    animal_keywords = ["tiger","lion","cat","dog","horse","elephant","bear","zebra"]
-    if any(any(k in t for k in animal_keywords) for t in obj_tags):
-        votes["동물"] += 0.6
+    # 1) 사람 계열: ImageNet에 person, groom, bridegroom, scuba diver 등으로 들어옴
+    human_keywords = [
+        "person", "man", "woman", "boy", "girl",
+        "bridegroom", "groom", "scuba", "diver", "suit"
+    ]
+    if any(any(k in t.lower() for k in human_keywords) for t in obj_tags):
+        votes["사람"] += 1.0   # 사람은 좀 세게
 
-    # 풍경
-    nature_keywords = ["forest","park","beach","mountain","lake","desert","waterfall","field"]
-    if any(any(k in t for k in nature_keywords) for t in scene_tags):
-        votes["풍경"] += 0.5
+    # 2) 동물
+    animal_keywords = ["tiger","lion","cat","dog","horse","elephant","bear","zebra","cow","sheep","goat"]
+    if any(any(k in t.lower() for k in animal_keywords) for t in obj_tags):
+        votes["동물"] += 1.0
 
-    # 건축
-    arch_keywords = ["office","factory","library","temple","church","stadium","hotel","airport","street","city"]
-    if any(any(k in t for k in scene_tags) for t in arch_keywords):
-        votes["건축"] += 0.4
-
-    # 산업
-    ind_keywords = ["factory","industrial","lab","laboratory"]
-    if any(any(k in t for k in scene_tags) for t in ind_keywords):
-        votes["산업"] += 0.4
-
-    # 음식
-    food_keywords = ["restaurant","kitchen","cafe","dining"]
-    if any(any(k in t for k in scene_tags) for t in food_keywords):
-        votes["음식"] += 0.35
+    # 3) 음식
+    food_keywords = ["pizza","hamburger","cheeseburger","hotdog","espresso","coffee","cup","teapot","plate","ice_cream","sushi"]
+    if any(any(k in t.lower() for k in food_keywords) for t in obj_tags):
+        votes["음식"] += 1.0
 
     return votes
 
+
+def category_votes_from_scene_tags(scene_tags: List[str]) -> Dict[str, float]:
+    """ResNet-Places 결과로부터 카테고리별 점수 만들기"""
+    votes = {c: 0.0 for c in CATEGORY_PROMPTS.keys()}
+
+    # 풍경
+    nature_keywords = ["forest","park","beach","mountain","lake","desert","waterfall","field","valley"]
+    if any(any(k in t.lower() for k in nature_keywords) for t in scene_tags):
+        votes["풍경"] += 1.0
+
+    # 건축
+    arch_keywords = ["office","factory","library","temple","church","stadium","hotel","airport","street","city","skyscraper","residential"]
+    if any(any(k in t.lower() for k in arch_keywords) for t in scene_tags):
+        votes["건축"] += 1.0
+
+    # 산업
+    ind_keywords = ["factory","industrial","laboratory","lab","power_plant","workshop"]
+    if any(any(k in t.lower() for k in ind_keywords) for t in scene_tags):
+        votes["산업"] += 1.0
+
+    # 음식 장소
+    foodplace_keywords = ["restaurant","kitchen","cafe","dining_room","coffee_shop"]
+    if any(any(k in t.lower() for k in foodplace_keywords) for t in scene_tags):
+        votes["음식"] += 1.0
+
+    return votes
+
+
 def mix_category_scores(clip_scores: Dict[str, float],
-                        votes: Dict[str, float],
-                        w_clip: float = 0.7,
-                        w_vote: float = 0.3) -> List[Tuple[str, float]]:
+                        obj_votes: Dict[str, float],
+                        scene_votes: Dict[str, float],
+                        w_clip: float = 0.4,
+                        w_obj: float = 0.3,
+                        w_scene: float = 0.3) -> List[Tuple[str, float]]:
+    """
+    최종 카테고리 = 0.4 * CLIP + 0.3 * 객체투표 + 0.3 * 장소투표
+    """
     mixed = {}
     for cat in clip_scores.keys():
-        mixed[cat] = clip_scores[cat] * w_clip + votes.get(cat, 0.0) * w_vote
-    # normalize
+        clip_part  = clip_scores.get(cat, 0.0) * w_clip
+        obj_part   = obj_votes.get(cat, 0.0)   * w_obj
+        scene_part = scene_votes.get(cat, 0.0) * w_scene
+        mixed[cat] = clip_part + obj_part + scene_part
+
+    # 0~1 사이로 맞추기 (간단 정규화)
     s = sum(mixed.values()) or 1.0
-    mixed = {k: v/s for k,v in mixed.items()}
-    # sort
+    mixed = {k: v/s for k, v in mixed.items()}
+
+    # 높은 순으로 정렬
     mixed_sorted = sorted(mixed.items(), key=lambda x: x[1], reverse=True)
     return mixed_sorted
+
 # ===============================
 # Cell 8. 통합 실행 함수
 # ===============================
 def run_full_infer(pil: Image.Image):
     # 1) 객체 3
     obj_tags = infer_objects(pil, topk=3)
+    # 수정한거
+    if not any("person" in t.lower() for t in obj_tags):
+        clothing_keywords = ["suit", "dress", "jacket", "shirt", "jeans", "hat", "kimono", "pajama"]
+        if any(k in t.lower() for t in obj_tags for k in clothing_keywords):
+            obj_tags.append("#person")
+
 
     # 2) 장소 3
     scene_tags = infer_scene(pil, topk=3)
@@ -334,10 +383,19 @@ def run_full_infer(pil: Image.Image):
     # 3) 분위기 3 (CLIP)
     mood_tags = infer_mood_clip(pil, topk=3)
 
-    # 4) 카테고리: CLIP + 태그투표 혼합
-    clip_cat_scores = infer_categories_clip(pil)
-    votes = category_votes_from_tags(obj_tags, scene_tags)
-    mixed = mix_category_scores(clip_cat_scores, votes, w_clip=0.7, w_vote=0.3)
+    # 4) 카테고리: CLIP + (객체 투표) + (장소 투표)
+    clip_cat_scores = infer_categories_clip(pil)                 # CLIP이 본 7카테고리 점수
+    obj_votes  = category_votes_from_tags(obj_tags)              # 객체 기반 점수
+    scene_votes = category_votes_from_scene_tags(scene_tags)     # 장소 기반 점수
+
+    mixed = mix_category_scores(
+        clip_cat_scores,
+        obj_votes,
+        scene_votes,
+        w_clip=0.4,   # CLIP 40%
+        w_obj=0.3,    # 객체 30%
+        w_scene=0.3   # 장소 30%
+    )
     top3_cat = mixed[:3]
 
     return {
