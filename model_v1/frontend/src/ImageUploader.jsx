@@ -4,32 +4,37 @@ function ImageUploader() {
   const [image, setImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [tags, setTags] = useState(null);
-  const [error, setError] = useState(null); // NSFW 메시지용
+  const [error, setError] = useState(null);
 
   const handleUpload = async (file) => {
     const formData = new FormData();
     formData.append('image', file);
 
     try {
-      const res = await fetch('http://localhost:5000/predict', {
-        method: 'POST',
-        body: formData,
-      });
+      const res = await fetch('http://127.0.0.1:5055/predict', {
+      method: 'POST',
+      body: formData,
+    });
+
 
       const data = await res.json();
 
       if (!res.ok || data.error) {
-        setError("🚫 부적절한 사진입니다."); // 경고 메시지 설정
+        if (data.error?.includes('NSFW')) {
+          setError("🚫 부적절한 사진입니다.");
+        } else {
+          setError("⚠️ 예측 중 오류가 발생했습니다.");
+        }
         setTags(null);
-        setPreviewUrl(null); // 이미지 미리보기 제거
+        setPreviewUrl(null);
         return;
       }
 
       setTags(data);
-      setError(null); // 오류 초기화
+      setError(null);
     } catch (err) {
       console.error("업로드 실패:", err);
-      setError("서버 연결에 실패했습니다.");
+      setError("❌ 서버 연결에 실패했습니다.");
       setTags(null);
       setPreviewUrl(null);
     }
@@ -40,7 +45,7 @@ function ImageUploader() {
     if (file) {
       setImage(file);
       setPreviewUrl(URL.createObjectURL(file));
-      setError(null); // 이전 오류 초기화
+      setError(null);
       handleUpload(file);
     }
   };
@@ -66,13 +71,27 @@ function ImageUploader() {
       )}
 
       {tags && tags.object_tags && (
-        <div style={{ marginTop: '20px' }}>
-          <h3>🎯 해시태그 결과</h3>
-          <p><strong>Object:</strong> {tags.object_tags.join(' ')}</p>
-          <p><strong>Scene:</strong> {tags.scene_tags.join(' ')}</p>
-          <p><strong>Mood:</strong> {tags.mood_tags.join(' ')}</p>
-        </div>
-      )}
+  <div style={{ marginTop: '20px' }}>
+    <h3>🎯 해시태그 결과</h3>
+    <p><strong>Object:</strong> {tags.object_tags.join(' ')}</p>
+    <p><strong>Scene:</strong> {tags.scene_tags.join(' ')}</p>
+    <p><strong>Mood:</strong> {tags.mood_tags.join(' ')}</p>
+  </div>
+)}
+
+{tags && tags.categories && (
+  <div style={{ marginTop: '20px' }}>
+    <h3>📊 카테고리 Top-3</h3>
+    <ul>
+      {tags.categories.map(([name, score], idx) => (
+        <li key={idx}>
+          {name}: {(score * 100).toFixed(1)}%
+        </li>
+      ))}
+    </ul>
+  </div>
+)}
+
     </div>
   );
 }
