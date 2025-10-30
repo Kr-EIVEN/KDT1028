@@ -20,7 +20,7 @@ export default function CarouselSection({
   title,
   icon,
   images,
-  perView = 4,
+  perView = 4,           // ✅ 한 슬라이드에 4장
   gap = 24,
   autoplayDelay = 3500,
 }: Props) {
@@ -29,7 +29,6 @@ export default function CarouselSection({
   const [selectedImg, setSelectedImg] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // ❤️ 좋아요 토글
   const handleLike = (img: string) => {
     if (!isLoggedIn) {
       alert("로그인이 필요합니다.");
@@ -41,7 +40,6 @@ export default function CarouselSection({
     );
   };
 
-  // 📸 이미지 클릭 → 팝업 or 로그인 체크
   const handleImageClick = (img: string) => {
     if (!isLoggedIn) {
       alert("로그인이 필요합니다.");
@@ -53,36 +51,31 @@ export default function CarouselSection({
 
   return (
     <section className="py-14">
-      <div className="max-w-6xl mx-auto px-4">
-        {/* 제목 */}
+      <div className="max-w-[1680px] mx-auto px-4"> {/* ✅ 폭 확장 (4장 × 400px + 여백) */}
         <div className="flex items-center justify-center gap-2 mb-8">
           {icon && <Image src={icon} alt="" width={36} height={36} />}
           <h2 className="text-2xl font-bold tracking-wide">{title}</h2>
         </div>
 
-        {/* 🔄 Swiper 슬라이드 (자동 재생 + prev/next 버튼) */}
+        {/* ✅ Swiper 슬라이드 */}
         <Swiper
           spaceBetween={gap}
-          slidesPerView={1}
+          slidesPerView={4}           // ✅ 고정 4장
           modules={[Autoplay, Navigation]}
           navigation
           autoplay={{
             delay: autoplayDelay,
             disableOnInteraction: false,
           }}
-          breakpoints={{
-            640: { slidesPerView: 2 },
-            1024: { slidesPerView: perView },
-          }}
-          className="select-none"
+          className="select-none overflow-hidden"  // ✅ 오버플로우 제거
         >
           {images.map((src, i) => (
-            <SwiperSlide key={i}>
+            <SwiperSlide key={i} className="flex justify-center">
               <div
-                className="relative aspect-square rounded-xl overflow-hidden border group cursor-pointer"
+                className="relative overflow-hidden rounded-xl border group cursor-pointer"
+                style={{ width: "400px", height: "400px" }} // ✅ 카드 크기 고정
                 onClick={() => handleImageClick(src)}
               >
-                {/* 이미지 */}
                 <Image
                   src={src}
                   alt={`carousel-${i}`}
@@ -90,7 +83,6 @@ export default function CarouselSection({
                   className="object-cover transition duration-300 group-hover:brightness-75"
                 />
 
-                {/* ❤️ 하트 (hover 시만 표시) */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -109,7 +101,6 @@ export default function CarouselSection({
           ))}
         </Swiper>
 
-        {/* “Show More” */}
         <div className="text-right mt-4">
           <a
             className="inline-flex items-center gap-1 hover:underline text-gray-700"
@@ -117,13 +108,12 @@ export default function CarouselSection({
           >
             Show More
             <span className="material-icons text-sm">
-              keyboard_double_arrow_right
             </span>
           </a>
         </div>
       </div>
 
-      {/* 📜 팝업 모달 */}
+      {/* 팝업 모달 */}
       {selectedImg && (
         <div
           className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
