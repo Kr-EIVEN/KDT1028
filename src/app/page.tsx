@@ -1,4 +1,5 @@
-// app/page.tsx (또는 이 파일이 있는 경로의 메인 페이지)
+"use client";
+
 import { Navbar, Footer } from "@/components";
 import Hero from "@/components/Hero";
 import CarouselSection from "@/components/CarouselSection";
@@ -18,7 +19,7 @@ export default function Page() {
   return (
     <>
       <Navbar />
-      <Hero />
+      <Hero />  {/* ✅ Hero 내부에 검색창 + 버튼 포함됨 */}
       <div className="max-w-6xl mx-auto px-4">
         <CarouselSection title="인기게시물" icon="/assets/imgs/fire.png" images={인기}/>
       </div>
@@ -29,3 +30,4 @@ export default function Page() {
     </>
   );
 }
+

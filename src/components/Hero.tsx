@@ -1,58 +1,80 @@
 "use client";
+
 import { useState } from "react";
-import Image from "next/image";
+import { useRouter } from "next/navigation";
+import UploadModal from "@/components/UploadModal";
 
 export default function Hero() {
-  const [open, setOpen] = useState(false);
-  return (
-    <header className="relative h-[88vh] w-full">
-      <Image
-        src="/assets/imgs/header.jpg"
-        alt="hero"
-        fill
-        priority
-        className="object-cover"
-      />
-      <div className="absolute inset-0 bg-black/50" />
+  const router = useRouter();
+  const [search, setSearch] = useState("");
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // 임시 로그인 상태
 
-      <div className="relative z-10 max-w-4xl mx-auto px-4 h-full flex flex-col items-center justify-center text-center text-white">
-        <h1 className="text-4xl md:text-6xl font-extrabold mb-4">
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!search.trim()) {
+      alert("검색어를 입력해주세요!");
+      return;
+    }
+    alert(`검색어: ${search}`);
+  };
+
+  const handleUploadClick = () => {
+    if (!isLoggedIn) {
+      if (confirm("로그인이 필요합니다. 로그인 페이지로 이동하시겠습니까?")) {
+        router.push("/login");
+      }
+    } else {
+      setIsUploadOpen(true);
+    }
+  };
+
+  return (
+    <section
+      className="relative h-[90vh] flex flex-col items-center justify-center text-center bg-cover bg-center"
+      style={{ backgroundImage: "url('/assets/imgs/bg.jpg')" }}
+    >
+      {/* 어두운 오버레이 */}
+      <div className="absolute inset-0 bg-black/30" />
+
+      {/* 중앙 텍스트 */}
+      <div className="relative z-10 text-white">
+        <h1 className="text-4xl sm:text-5xl font-bold mb-4 drop-shadow-lg">
           픽쇼 방문이 처음이신가요?
         </h1>
-        <p className="opacity-90 mb-8">
-          일상에서 촬영한 사진들을 이웃과 공유하고 더 좋은사진을 위해 후원해주세요!!
+        <p className="text-gray-100 mb-8 drop-shadow-md">
+          일상에서 촬영한 사진들을 이웃과 공유하고 더 좋은 사진을 위해 후원해주세요!
         </p>
 
-        <button
-          onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/10 px-6 py-3 hover:bg-white/20 transition"
+        {/* 🔍 검색창 */}
+        <form
+          onSubmit={handleSearch}
+          className="flex items-center bg-white rounded-full shadow-md px-5 py-3 w-[400px] max-w-full mx-auto mb-5"
         >
-          {/* 아이콘 이미지 (public/assets/imgs/playicon.png) */}
-          <img
-            src="/assets/imgs/playicon.png"
-            alt="Play Icon"
-            className="w-5 h-5"
+          <input
+            type="text"
+            placeholder="사진을 검색해보세요..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="flex-grow text-gray-700 outline-none"
           />
-          <span className="font-semibold text-white">Watch Video</span>
+          <button type="submit" className="text-gray-500 hover:text-gray-700">
+            🔍
+          </button>
+        </form>
+
+        {/* 📸 사진 업로드 버튼 */}
+        <button
+          onClick={handleUploadClick}
+          className="bg-white text-gray-900 px-6 py-3 rounded-full hover:bg-gray-100 transition shadow font-semibold"
+        >
+          사진 올리기
         </button>
       </div>
 
-      {/* 모달 */}
-      {open && (
-        <div
-          className="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-4"
-          onClick={() => setOpen(false)}
-        >
-          <div
-            className="bg-black w-full max-w-3xl aspect-video rounded-xl overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <video controls autoPlay className="w-full h-full">
-              <source src="/assets/imgs/tutorial-video.mp4" type="video/mp4" />
-            </video>
-          </div>
-        </div>
-      )}
-    </header>
+      {/* ✅ 업로드 팝업 */}
+      <UploadModal isOpen={isUploadOpen} onClose={() => setIsUploadOpen(false)} />
+    </section>
   );
 }
+
