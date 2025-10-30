@@ -19,15 +19,38 @@ export default function Page() {
   return (
     <>
       <Navbar />
-      <Hero />  {/* ✅ Hero 내부에 검색창 + 버튼 포함됨 */}
-      <div className="max-w-6xl mx-auto px-4">
-        <CarouselSection title="인기게시물" icon="/assets/imgs/fire.png" images={인기}/>
+      <Hero />
+
+      {/* ✅ 인기게시물 섹션 (부모 폭 제한 제거 + 중앙정렬) */}
+      <div className="w-full flex justify-center px-4">
+        <CarouselSection
+          title="인기게시물"
+          icon="/assets/imgs/fire.png"
+          images={인기}
+          perView={4}      // 4장
+          gap={28}         // 카드 간격
+          intervalMs={3500}
+          transitionMs={500}
+          // 선택: 섹션 배경을 주고 싶으면 아래 주석 해제
+          // sectionBgClass="bg-[#1f2937] rounded-3xl px-8 py-12 shadow-xl"
+        />
       </div>
-      <div className="max-w-6xl mx-auto px-4">
-        <CarouselSection title="최신게시글" icon="/assets/imgs/newicon.png" images={최신}/>
+
+      {/* ✅ 최신게시글 섹션 (동일 처리) */}
+      <div className="w-full flex justify-center px-4 mt-10">
+        <CarouselSection
+          title="최신게시글"
+          icon="/assets/imgs/newicon.png"
+          images={최신}
+          perView={4}
+          gap={28}
+          intervalMs={3500}
+          transitionMs={500}
+          // sectionBgClass="bg-[#1f2937] rounded-3xl px-8 py-12 shadow-xl"
+        />
       </div>
+
       <Footer />
     </>
   );
 }
-
