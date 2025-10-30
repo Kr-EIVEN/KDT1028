@@ -2,34 +2,21 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
+import { usePathname } from "next/navigation";
 
 export default function Navbar() {
-  const [user, setUser] = useState<{ nickname: string } | null>(null);
+  const [showSearch, setShowSearch] = useState(false);
   const pathname = usePathname();
-  const router = useRouter();
 
   const isActive = (path: string) =>
     pathname === path
       ? "text-black font-semibold border-b-2 border-black pb-[1px]"
       : "hover:opacity-80 text-gray-700";
 
-  // ✅ localStorage에서 로그인 정보 불러오기
-  useEffect(() => {
-    const stored = localStorage.getItem("user");
-    if (stored) setUser(JSON.parse(stored));
-  }, []);
-
-  // ✅ 로그아웃 함수
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    setUser(null);
-    router.push("/login");
-  };
-
   return (
     <nav className="fixed top-0 inset-x-0 z-50 bg-white shadow-md">
+      {/* ✅ 전체화면 너비로 확장 */}
       <div className="w-full px-8 lg:px-16">
         <div className="flex items-center justify-between h-[64px] text-gray-800">
           
@@ -66,31 +53,16 @@ export default function Navbar() {
             <Link href="/customer" className={isActive("/customer")}>
               고객센터
             </Link>
-
-            {/* ✅ 로그인 여부에 따른 표시 */}
-            {user ? (
-              <div className="flex items-center gap-3">
-                <span className="font-semibold text-gray-800">
-                  {user.nickname}님
-                </span>
-                <button
-                  onClick={handleLogout}
-                  className="text-sm px-3 py-1.5 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-700 transition"
-                >
-                  로그아웃
-                </button>
-              </div>
-            ) : (
-              <Link
-                href="/login"
-                className="px-3 py-1.5 rounded-md bg-gray-800 text-white text-sm font-medium hover:bg-gray-700 transition"
-              >
-                로그인 / 회원가입
-              </Link>
-            )}
+            <Link
+              href="/login"
+              className="px-3 py-1.5 rounded-md bg-gray-800 text-white text-sm font-medium hover:bg-gray-700 transition"
+            >
+              로그인 / 회원가입
+            </Link>
           </div>
         </div>
       </div>
     </nav>
   );
 }
+
