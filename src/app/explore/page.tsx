@@ -19,7 +19,7 @@ export default function ExplorePage() {
   return (
     <main className="bg-gray-950 min-h-screen text-white">
       <Navbar />
-
+ 
       {/* 헤더 (배경 통일) */}
       <section className="relative h-[36vh] w-full">
         <Image src="/bg.jpg" alt="Explore" fill priority className="object-cover opacity-80" />

@@ -36,7 +36,7 @@ export default function LoginPage() {
 
       {/* ✅ 로그인 폼 */}
       <section className="flex-grow flex items-center justify-center py-24 bg-[#f9f9f9]">
-        <div className="w-full max-w-sm bg-white shadow-md rounded-2xl p-8 border border-gray-100 relative">
+        <div className="w-full max-w-lg bg-white shadow-md rounded-2xl p-8 border border-gray-100 relative">
           <h1 className="text-2xl font-bold text-center mb-8">로그인</h1>
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -79,7 +79,7 @@ export default function LoginPage() {
           <div className="text-center mt-6">
             <button
               onClick={() => setShowSignup(true)}
-              className="text-gray-700 hover:text-gray-900 text-sm underline"
+              className="text-gray-800 hover:text-gray-900 text-sm underline"
             >
               회원가입
             </button>

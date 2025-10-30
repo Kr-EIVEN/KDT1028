@@ -8,6 +8,7 @@ import Footer from "@/components/footer";
 export default function EventPage() {
   const [tab, setTab] = useState("ongoing");
 
+  // 진행 중인 이벤트
   const ongoingEvents = [
     {
       title: "소중한 사람과의 추억을 공유하세요!",
@@ -32,7 +33,7 @@ export default function EventPage() {
     },
   ];
 
-  // 종료된 이벤트는 비워둠
+  // 종료된 이벤트 (현재 없음)
   const endedEvents: any[] = [];
 
   const list = tab === "ongoing" ? ongoingEvents : endedEvents;
@@ -42,9 +43,10 @@ export default function EventPage() {
       <Navbar />
 
       <section className="max-w-6xl mx-auto px-4 py-24">
+        {/* 제목 */}
         <h1 className="text-3xl font-bold mb-6">이벤트</h1>
 
-        {/* 탭 */}
+        {/* 탭 메뉴 */}
         <div className="flex gap-6 mb-10 border-b border-gray-300">
           <button
             className={`pb-2 ${
@@ -68,14 +70,15 @@ export default function EventPage() {
           </button>
         </div>
 
-        {/* 카드 리스트 */}
-        {list.length > 0 && (
+        {/* 카드 리스트 or 안내 문구 */}
+        {list.length > 0 ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {list.map((ev, i) => (
               <div
                 key={i}
                 className="bg-gray-50 rounded-2xl overflow-hidden shadow hover:shadow-lg transition border border-gray-200"
               >
+                {/* 이미지 */}
                 <div className="relative aspect-square w-full">
                   <Image
                     src={ev.img}
@@ -84,6 +87,8 @@ export default function EventPage() {
                     className="object-contain bg-white"
                   />
                 </div>
+
+                {/* 내용 */}
                 <div className="p-5">
                   <p className="text-sm text-gray-500 mb-1">{ev.target}</p>
                   <h2 className="text-lg font-semibold mb-1">{ev.desc}</h2>
@@ -93,6 +98,11 @@ export default function EventPage() {
               </div>
             ))}
           </div>
+        ) : (
+          // 종료된 이벤트 없을 때 표시
+          <p className="text-center text-gray-500 mt-20">
+            현재 종료된 이벤트가 없습니다.
+          </p>
         )}
       </section>
 
@@ -100,4 +110,5 @@ export default function EventPage() {
     </main>
   );
 }
+
 

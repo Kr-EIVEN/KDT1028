@@ -16,8 +16,10 @@ export default function Navbar() {
 
   return (
     <nav className="fixed top-0 inset-x-0 z-50 bg-white shadow-md">
-      <div className="max-w-7xl mx-auto px-6">
+      {/* ✅ 전체화면 너비로 확장 */}
+      <div className="w-full px-8 lg:px-16">
         <div className="flex items-center justify-between h-[64px] text-gray-800">
+          
           {/* 왼쪽 메뉴 */}
           <div className="flex items-center gap-8">
             <Link href="/event" className={isActive("/event")}>
@@ -29,7 +31,7 @@ export default function Navbar() {
           </div>
 
           {/* 로고 중앙 */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center">
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center">
             <Link href="/" className="inline-flex items-center gap-2">
               <Image
                 src="/assets/imgs/cameraIcon.png"
@@ -43,21 +45,14 @@ export default function Navbar() {
           </div>
 
           {/* 오른쪽 메뉴 */}
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-6 pr-6 lg:pr-10">
             <Link href="/explore" className={isActive("/explore")}>
               탐색
             </Link>
 
-            {/* 검색 */}
-            <button
-              className="flex items-center gap-1 hover:opacity-80"
-              onClick={() => setShowSearch((s) => !s)}
-            >
-              <span className="material-icons text-gray-700">search</span>
-              <span className="hidden sm:inline">검색</span>
-            </button>
-
-            {/* 로그인 버튼 */}
+            <Link href="/customer" className={isActive("/customer")}>
+              고객센터
+            </Link>
             <Link
               href="/login"
               className="px-3 py-1.5 rounded-md bg-gray-800 text-white text-sm font-medium hover:bg-gray-700 transition"
